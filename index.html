@@ -2,174 +2,228 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Telangana Dog Feeder Map</title>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-
   <style>
-    body {
-  margin: 0;
-}
+    body { margin: 0; }
 
-#map {
-  height: 100vh;
-  width: 100vw;
-}
+    #map {
+      height: 100vh;
+      width: 100vw;
+    }
 
-#topLeftUI {
+    /* ── Top Left UI (search + results) ── */
+    #topLeftUI {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 240px;
+      width: calc(100vw - 20px);
+    }
+
+    #searchBox {
+      background: rgba(255,255,255,0.9);
+      padding: 8px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    #searchBox:hover {
+      background: rgba(255,255,255,1);
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    }
+
+    #address {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #searchBox button {
+      padding: 6px 10px;
+      font-size: 14px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #searchBox button:hover { background: #0056b3; }
+
+    #resultsBox {
+      width: 100%;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      box-sizing: border-box;
+    }
+
+    #resultsList {
+      margin-top: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #007bff #f0f0f0;
+    }
+    #resultsList::-webkit-scrollbar { width: 6px; }
+    #resultsList::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 3px; }
+    #resultsList::-webkit-scrollbar-thumb { background: #007bff; border-radius: 3px; }
+    #resultsList::-webkit-scrollbar-thumb:hover { background: #0056b3; }
+
+    /* ── Register Form ── */
+    #formBox {
   position: fixed;
-  top: 70px;
-  left: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Search box fixed top-left with transparency */
-#searchBox {
-background: rgba(255,255,255,0.9);
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
-
-  transition: background 0.3s, box-shadow 0.3s;
-}
-
-/* On hover, make fully opaque and stronger shadow */
-#searchBox:hover {
-  background: rgba(255, 255, 255, 1);
-  box-shadow: 0 0 12px rgba(0,0,0,0.5);
-}
-
-/* Input field responsive */
-#address {
-  flex: 1 1 120px;
-  max-width: 200px;
-  padding: 6px 8px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-/* Button responsive */
-#searchBox button {
-  padding: 6px 10px;
-  font-size: 14px;
-  border: none;
-  background: #007bff;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-#searchBox button:hover {
-  background: #0056b3;
-}
-
-#resultsBox {
-  width: 220px;
+  bottom: 50px;
+  left: 20px;        /* ← back to left */
   background: white;
-  padding: 10px;
-  border-radius: 6px;
+  padding: 12px;
+  z-index: 9999;
   box-shadow: 0 0 8px rgba(0,0,0,0.3);
-  /* No overflow or max-height here */
+  border-radius: 6px;
+  width: 180px;
+  box-sizing: border-box;
 }
 
-#resultsList {
-  margin-top: 8px;
-  max-height: 220px;       /* Fixed height — only this scrolls */
-  overflow-y: auto;
-  scrollbar-width: thin;   /* Firefox — thinner scrollbar */
-  scrollbar-color: #007bff #f0f0f0;
-}
+    #formBox input, #formBox select {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
 
-/* Chrome/Safari scrollbar styling */
-#resultsList::-webkit-scrollbar {
-  width: 6px;
-}
-#resultsList::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 3px;
-}
-#resultsList::-webkit-scrollbar-thumb {
-  background: #007bff;
-  border-radius: 3px;
-}
-#resultsList::-webkit-scrollbar-thumb:hover {
-  background: #0056b3;
-}
+    #formBox button {
+      width: 100%;
+      padding: 8px;
+      font-size: 13px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #formBox button:hover { background: #0056b3; }
 
+    /* ── How to Use Button ── */
+    #howToUseBtn {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+    }
+    #howToUseBtn button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      white-space: nowrap;
+    }
 
-/* Mobile tweaks */
-@media (max-width: 480px) {
-  #searchBox {
-    top: 5px;
-    left: 5px;
-    padding: 6px 8px;
-    gap: 4px;
-  }
+    /* ── Credit ── */
+    #credit {
+      position: fixed;
+      bottom: 50px;
+      left: 10px;
+      z-index: 9999;
+      font-size: 11px;
+      color: #555;
+      font-family: Georgia, serif;
+      font-style: italic;
+      pointer-events: none;
+    }
 
-  #address {
-    flex: 1 1 100px;
-    font-size: 13px;
-  }
+    /* ── Mobile overrides ── */
+    @media (max-width: 480px) {
+      #topLeftUI {
+        top: 8px;
+        left: 8px;
+        max-width: calc(100vw - 16px);
+      }
 
-  #searchBox button {
-    padding: 5px 8px;
-    font-size: 13px;
-  }
-}
+      #address { font-size: 13px; }
+      #searchBox button { font-size: 13px; padding: 5px 8px; }
 
+      #resultsBox { max-height: 160px; }
+      #resultsList { max-height: 120px; }
 
-</style>
+      #formBox {
+        bottom: 50px;
+        right: auto;
+        left: 8px;
+        width: auto;
+      }
+
+      #howToUseBtn {
+        bottom: 10px;
+      }
+
+      #credit {
+        display: none; /* hide on very small screens to avoid clutter */
+      }
+    }
+  </style>
 </head>
 
 <body>
 
 <div id="map"></div>
 
+<!-- Search + Results -->
 <div id="topLeftUI">
   <div id="searchBox">
-    <input id="address" placeholder="Enter area or pincode" />
+    <input id="address" placeholder="Area or pincode" />
     <button onclick="searchLocation()">Find</button>
   </div>
-     <div id="resultsBox">
+  <div id="resultsBox">
     <b>Feeders in Area</b>
     <div id="resultsList"></div>
-  </div> 
   </div>
+</div>
 
-
-<div id="formBox" style="
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background: white;
-  padding: 10px;
-  z-index: 9999;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
-  border-radius: 6px;
-">
-  <input id="name" placeholder="Your name" /><br/><br/>
-  <input id="phone" placeholder="Phone number" /><br/><br/>
-   <select id="role" style="
-    width: 100%;
-    padding: 6px 8px;
-    font-size: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 10px;
-  ">
+<!-- Register Form -->
+<div id="formBox">
+  <input id="name" placeholder="Your name" />
+  <input id="phone" placeholder="Phone number" />
+  <select id="role">
     <option value="Feeder">Feeder</option>
     <option value="Rescuer">Rescuer</option>
     <option value="Vet">Vet</option>
-  </select><br/>
+  </select>
   <button onclick="document.getElementById('disclaimerPopup').style.display='flex'">
-  Register
-</button>
+    Register
+  </button>
+</div>
+
+<!-- Credit -->
+<div id="credit">
+  In loving memory of Sandy 🐾<br/>by Dipanjan
+</div>
+
+<!-- How to Use Button -->
+<div id="howToUseBtn">
+  <button onclick="document.getElementById('helpPopup').style.display='flex'">
+    How to use ❓
+  </button>
 </div>
 
 <!-- Disclaimer Popup -->
@@ -192,131 +246,50 @@ background: rgba(255,255,255,0.9);
     font-family: Arial, sans-serif;
     position: relative;
   ">
-    <!-- Close Button -->
     <button onclick="document.getElementById('disclaimerPopup').style.display='none'" style="
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: #888;
+      position: absolute; top: 10px; right: 12px;
+      background: none; border: none; font-size: 18px; cursor: pointer; color: #888;
     ">✕</button>
 
     <h3 style="margin: 0 0 12px; color: #d9534f;">⚠️ Data Sharing Disclaimer</h3>
 
-    <!-- Scrollable legal text -->
     <div style="
-      max-height: 220px;
-      overflow-y: auto;
-      font-size: 13px;
-      line-height: 1.7;
-      color: #333;
-      border: 1px solid #eee;
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 16px;
-      scrollbar-width: thin;
-      scrollbar-color: #007bff #f0f0f0;
+      max-height: 220px; overflow-y: auto; font-size: 13px; line-height: 1.7;
+      color: #333; border: 1px solid #eee; border-radius: 6px;
+      padding: 10px; margin-bottom: 16px;
+      scrollbar-width: thin; scrollbar-color: #007bff #f0f0f0;
     ">
       <p><b>Please read this carefully before submitting.</b></p>
-
       <p>By clicking <b>"I Agree & Submit"</b>, you confirm that:</p>
-
       <ol style="padding-left: 16px; margin: 0;">
-        <li style="margin-bottom:8px;">
-          You are <b>voluntarily</b> sharing your name, phone number, and location on this platform.
-        </li>
-        <li style="margin-bottom:8px;">
-          You understand that your <b>phone number may be shared</b> with members of the public who request it through this platform, for the purpose of animal welfare coordination.
-        </li>
-        <li style="margin-bottom:8px;">
-          You acknowledge that while access is moderated, <b>this platform cannot guarantee</b> how third parties may use your contact information once shared.
-        </li>
-        <li style="margin-bottom:8px;">
-          You consent to your information being <b>stored in a database</b> and displayed on a publicly accessible map.
-        </li>
-        <li style="margin-bottom:8px;">
-          You understand that you may request <b>removal of your data</b> at any time by contacting the administrator.
-        </li>
-        <li style="margin-bottom:8px;">
-          You confirm that the information you have provided is <b>accurate and belongs to you</b>.
-        </li>
+        <li style="margin-bottom:8px;">You are <b>voluntarily</b> sharing your name, phone number, and location on this platform.</li>
+        <li style="margin-bottom:8px;">You understand that your <b>phone number may be shared</b> with members of the public who request it through this platform, for the purpose of animal welfare coordination.</li>
+        <li style="margin-bottom:8px;">You acknowledge that while access is moderated, <b>this platform cannot guarantee</b> how third parties may use your contact information once shared.</li>
+        <li style="margin-bottom:8px;">You consent to your information being <b>stored in a database</b> and displayed on a publicly accessible map.</li>
+        <li style="margin-bottom:8px;">You understand that you may request <b>removal of your data</b> at any time by contacting the administrator.</li>
+        <li style="margin-bottom:8px;">You confirm that the information you have provided is <b>accurate and belongs to you</b>.</li>
       </ol>
-
       <p style="margin-top:12px; font-size:12px; color:#888;">
         This consent is recorded at the time of submission. This platform is operated voluntarily for animal welfare purposes and is not liable for misuse of shared data by third parties.
       </p>
     </div>
 
-    <!-- Checkbox confirmation -->
     <label style="display:flex; align-items:flex-start; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
       <input type="checkbox" id="disclaimerCheck" style="margin-top:3px; cursor:pointer;"/>
-      I have read and understood the above disclaimer <br>and voluntarily agree to share my data.
+      I have read and understood the above disclaimer and voluntarily agree to share my data.
     </label>
 
-    <!-- Buttons -->
     <div style="display:flex; gap:10px;">
       <button onclick="document.getElementById('disclaimerPopup').style.display='none'" style="
-        flex: 1;
-        padding: 8px;
-        border: 1px solid #ccc;
-        background: white;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 13px;
-        color: #555;
+        flex:1; padding:8px; border:1px solid #ccc; background:white;
+        border-radius:6px; cursor:pointer; font-size:13px; color:#555;
       ">Cancel</button>
-
       <button onclick="handleDisclaimerSubmit()" style="
-        flex: 1;
-        padding: 8px;
-        border: none;
-        background: #007bff;
-        color: white;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: bold;
+        flex:1; padding:8px; border:none; background:#007bff; color:white;
+        border-radius:6px; cursor:pointer; font-size:13px; font-weight:bold;
       ">I Agree & Submit</button>
     </div>
   </div>
-</div>
-
-<div style="
-  position: fixed;
-  bottom: 20px;
-  right: 10px;
-  z-index: 9999;
-  font-size: 12px;
-  color: #555;
-  text-align: right;
-  font-family: Georgia, serif;
-  font-style: italic;
-">
-  In loving memory of Sandy🐾<br/>
-  by Dipanjan
-</div>
-
-<!-- Help Button -->
-<div style="
-  position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-">
-  <button onclick="document.getElementById('helpPopup').style.display='flex'" style="
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 18px;
-    font-size: 13px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  ">How to use❓</button>
 </div>
 
 <!-- Help Popup -->
@@ -330,38 +303,30 @@ background: rgba(255,255,255,0.9);
   justify-content: center;
 ">
   <div style="
-    background: white;
-    border-radius: 10px;
-    padding: 24px;
-    max-width: 410px;
-    width: 90%;
+    background: white; border-radius: 10px; padding: 24px;
+    max-width: 380px; width: 90%;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    font-family: Arial, sans-serif;
-    position: relative;
+    font-family: Arial, sans-serif; position: relative;
   ">
-    <!-- Close Button -->
     <button onclick="document.getElementById('helpPopup').style.display='none'" style="
-      position: absolute;
-      top: 10px;
-      right: 11px;
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: #888;
+      position: absolute; top: 10px; right: 11px;
+      background: none; border: none; font-size: 18px; cursor: pointer; color: #888;
     ">✕</button>
 
     <h3 style="margin: 0 0 16px; color: #007bff;">🐾 How to Use</h3>
 
-    <ol style="padding-left: 18px; margin: 0; line-height: 2; max-height: 220px;
-  overflow-y: auto; scrollbar-width: thin; scrollbar-color: #007bff #f0f0f0;">
-      <li>🧭<b>This is for Telengana only</b></li>
-      <li>🔍 <b>Search your area or pincode using the search box </b></li>
-      <li>🌐 <b>Discover the feeder name in the resultbox and zoom into the marker for location</b></li>
-      <li>📍 <b>To add yourself,/b> click on the map to select your exact location</b></li>
-      <li>👤 <b>Fill in your name and phone number</b></li>
-      <li>✅ <b>Submit to register as a feeder in your area </b></li>
-      <li>📞 <b>Request contact of existing feeders by clicking on their marker</b></li>
+    <ol style="
+      padding-left: 18px; margin: 0; line-height: 2;
+      max-height: 220px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: #007bff #f0f0f0;
+    ">
+      <li>🧭 <b>This is for Telangana only</b></li>
+      <li>🔍 <b>Search</b> your area or pincode using the search box</li>
+      <li>🌐 <b>Discover</b> feeder names in the result box and zoom into the marker for location</li>
+      <li>📍 <b>To add yourself</b>, click on the map to select your exact location</li>
+      <li>👤 <b>Fill in</b> your name and phone number</li>
+      <li>✅ <b>Submit</b> to register as a feeder in your area</li>
+      <li>📞 <b>Request contact</b> of existing feeders by clicking on their marker</li>
     </ol>
 
     <p style="margin: 16px 0 0; font-size: 12px; color: #888; text-align:center;">
@@ -370,11 +335,9 @@ background: rgba(255,255,255,0.9);
   </div>
 </div>
 
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="app.js"></script>
 
 </body>
-
 </html>
