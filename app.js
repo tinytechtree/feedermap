@@ -86,7 +86,7 @@ async function showNearbyFeeders(lat, lng) {
 
   const { data: feeders, error } = await supabaseClient
     .from("feeder_approved")
-    .select("id, name, lat, lng")
+    .select("id, name, lat, lng, role")
     .gte("lat", lat - radius)
     .lte("lat", lat + radius)
     .gte("lng", lng - radius)
@@ -109,7 +109,8 @@ async function showNearbyFeeders(lat, lng) {
     const item = document.createElement("div");
     item.style.cssText = "padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;";
     item.innerHTML = `
-      🐾 <b>${f.name}</b><br/>
+      🐾 <b>${f.name}</b><span style="font-size:11px; color:white; background:#007bff; 
+    padding:2px 6px; border-radius:10px; margin-left:4px;">${f.role}</span><br/>
       <button
         onclick="requestContact(${f.id}, '${f.name}')"
         style="margin-top:4px; font-size:12px; padding:3px 8px; cursor:pointer;">
